@@ -163,7 +163,9 @@ module "cloudfront" {
   bucket_id          = module.s3.bucket_id
   bucket_arn         = module.s3.bucket_arn
   bucket_domain_name = module.s3.bucket_regional_domain_name
+  alb_dns_name       = module.vpc.alb_dns_name
 }
+
 module "vpc" {
   source = "./modules/vpc"
 
