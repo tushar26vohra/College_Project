@@ -228,15 +228,14 @@ cat <<EOT > .env
 PORT=5000
 MONGODB_CONNECTION=mongodb+srv://vohratushar23_db_user:Tusharpb2020%40@cluster0.uor6sb6.mongodb.net/codemate?retryWrites=true&w=majority
 JWT_SECRET=supersecretkey
-DEVELOPMENT_FRONTEND_URL=http://d280aexswciliq.cloudfront.net
+DEVELOPMENT_FRONTEND_URL=http://${var.cloudfront_url}
 EOT
 
 npm install
 pm2 start src/server.js --name backend
-pm2 startup systemd -u ubuntu --hp /home/ubuntu
 pm2 save
 EOF
-  )
+)
 }
 
 ################################
