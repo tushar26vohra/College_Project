@@ -1,55 +1,46 @@
-class CodeExecuteService
-{
-    url = import.meta.env.VITE_BACKEND_URL;
+class CodeExecuteService {
 
-    async getSupportedLanguages()
-    {
-        let response;
+    async getSupportedLanguages() {
+        try {
+            const response = await fetch("/api/code/languages");
 
-        try
-        {
-            response = await fetch(
-                this.url + "api/code/languages",
-                {
-                    method: "GET"
-                }
-            );
+            if (!response)
+                return [];
+
+            if (response.status !== 200)
+                return [];
+
+            return await response.json();
+
+        } catch (err) {
+            console.error(err);
+            return [];
         }
-        catch(err)
-        {
-            console.log(err);
-        }
-
-        // will get result array of objects containing [{ id, name }]
-        return (await response.json());
     }
 
-    async executeCode(currentFileCode, languageId, stdin)
-    {
-        let response;
-        try
-        {
-            response = await fetch(
-                this.url + "api/code/execute",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        code: currentFileCode,
-                        language_id: languageId,
-                        stdin: stdin
-                    })
-                }
-            );
-        }
-        catch(err)
-        {
-            console.log(err);
-        }
+    async executeCode(currentFileCode, languageId, stdin) {
+        try {
+            const response = await fetch("/api/code/execute", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    code: currentFileCode,
+                    language_id: languageId,
+                    stdin: stdin
+                })
+            });
 
-        return (await response.json());
+            if (!response)
+                return { success: false };
+
+            return await response.json();
+
+        } catch (err) {
+            console.error(err);
+            return { success: false };
+        }
     }
 }
 
