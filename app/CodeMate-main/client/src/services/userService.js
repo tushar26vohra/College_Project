@@ -5,21 +5,21 @@ class UserService {
     authService = new AuthService();
     baseUrl = "/api/users";
 
-    async request(url) {
+    async request(endpoint) {
         const token = this.authService.getToken();
 
         try {
-            const response = await fetch(url, {
+            const response = await fetch(endpoint, {
                 headers: {
-                    "Authorization": `Bearer ${token}`
+                    "Authorization": token ? `Bearer ${token}` : ""
                 }
             });
 
-            const data = await response.json();
+            const data = await response.json().catch(() => ({}));
             return { status: response.status, data };
 
         } catch (err) {
-            console.error(err);
+            console.error("User API error:", err);
             return { status: 500, data: { message: "Network error" } };
         }
     }

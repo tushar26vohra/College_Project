@@ -3,17 +3,11 @@ class CodeExecuteService {
     async getSupportedLanguages() {
         try {
             const response = await fetch("/api/code/languages");
-
-            if (!response)
-                return [];
-
-            if (response.status !== 200)
-                return [];
+            if (!response.ok) return [];
 
             return await response.json();
-
         } catch (err) {
-            console.error(err);
+            console.error("Language fetch error:", err);
             return [];
         }
     }
@@ -32,13 +26,13 @@ class CodeExecuteService {
                 })
             });
 
-            if (!response)
+            if (!response.ok)
                 return { success: false };
 
             return await response.json();
 
         } catch (err) {
-            console.error(err);
+            console.error("Execute error:", err);
             return { success: false };
         }
     }

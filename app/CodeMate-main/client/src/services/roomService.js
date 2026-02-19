@@ -5,24 +5,25 @@ class RoomService {
     authService = new AuthService();
     baseUrl = "/api/room";
 
-    async request(url, method = "GET", body = null) {
+    async request(endpoint, method = "GET", body = null) {
         const token = this.authService.getToken();
 
         try {
-            const response = await fetch(url, {
+            const response = await fetch(endpoint, {
                 method,
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Authorization": token ? `Bearer ${token}` : ""
                 },
                 body: body ? JSON.stringify(body) : null
             });
 
-            const data = await response.json();
+            const data = await response.json().catch(() => ({}));
+
             return { status: response.status, data };
 
         } catch (err) {
-            console.error(err);
+            console.error("Room API error:", err);
             return { status: 500, data: { message: "Network error" } };
         }
     }
@@ -42,7 +43,7 @@ class RoomService {
     }
 
     async createRoom(owner, title) {
-        const res = await this.request(`${this.baseUrl}/`, "POST", { owner, title });
+        const res = await this.request(`${this.baseUrl}`, "POST", { owner, title });
         if (res.status !== 200)
             return { success: false, message: res.data.message };
         return { success: true, room: res.data.room };
