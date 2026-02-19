@@ -1,4 +1,5 @@
 require('dotenv').config();
+
 const { SocketEvent, USER_CONNECTION_STATUS } = require('./types');
 const http = require("http");
 const cors = require("cors");
@@ -14,39 +15,45 @@ const mongoose = require('mongoose');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+/* =========================
+   MIDDLEWARE
+========================= */
+
 app.use(express.json());
 
-const allowedOrigins = [
-    process.env.DEVELOPMENT_FRONTEND_URL,
-];
+// 🔥 PRODUCTION SAFE CORS (ALLOW ALL)
+app.use(cors({
+    origin: true,
+    credentials: true,
+}));
 
-app.use(
-    cors({
-        origin: (origin, callback) => {
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error("Not allowed by CORS"));
-            }
-        },
-        credentials: true,
-    })
-);
+/* =========================
+   STATIC FILES
+========================= */
 
 app.use(express.static(path.join(__dirname, "../public")));
 
+/* =========================
+   HEALTH CHECK (ALB)
+========================= */
 
-// ✅ HEALTH CHECK ROUTE (VERY IMPORTANT FOR ALB)
 app.get("/", (req, res) => {
     res.status(200).send("Backend Running");
 });
 
+/* =========================
+   HTTP SERVER
+========================= */
 
 const server = http.createServer(app);
 
+/* =========================
+   SOCKET.IO
+========================= */
+
 const io = new Server(server, {
     cors: {
-        origin: allowedOrigins,
+        origin: true,
         methods: ["GET", "POST"],
         credentials: true,
     },
@@ -60,10 +67,6 @@ function getUsersInRoom(roomId) {
     return userSocketMap.filter((user) => user.roomId === roomId);
 }
 
-function getRoomId(socketId) {
-    return userSocketMap.find((user) => user.socketId === socketId)?.roomId;
-}
-
 function getUserBySocketId(socketId) {
     return userSocketMap.find((user) => user.socketId === socketId);
 }
@@ -71,6 +74,7 @@ function getUserBySocketId(socketId) {
 io.on("connection", (socket) => {
 
     socket.on(SocketEvent.JOIN_REQUEST, ({ roomId, username }) => {
+
         const isUsernameExist = getUsersInRoom(roomId).filter(
             (user) => user.username === username
         );
@@ -104,6 +108,7 @@ io.on("connection", (socket) => {
         if (!user) return;
 
         const roomId = user.roomId;
+
         socket.broadcast.to(roomId).emit(SocketEvent.USER_DISCONNECTED, { user });
 
         userSocketMap = userSocketMap.filter((u) => u.socketId !== socket.id);
@@ -111,22 +116,28 @@ io.on("connection", (socket) => {
     });
 });
 
+/* =========================
+   API ROUTES
+========================= */
 
-// API ROUTES
 app.use("/api/code", executeCodeRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/room", roomRoutes);
 
+/* =========================
+   GLOBAL ERROR HANDLER
+========================= */
 
-// GLOBAL ERROR HANDLER
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: "Something went wrong!" });
 });
 
+/* =========================
+   DATABASE + SERVER START
+========================= */
 
-// MONGODB CONNECTION
 mongoose.connect(process.env.MONGODB_CONNECTION)
     .then(() => {
         server.listen(PORT, () => {

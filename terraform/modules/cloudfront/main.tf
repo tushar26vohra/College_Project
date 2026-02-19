@@ -125,9 +125,7 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 }
 
-################################
-# OUTPUT
-################################
+
 output "cloudfront_url" {
   value = aws_cloudfront_distribution.cdn.domain_name
 }
